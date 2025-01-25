@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import vertexShader from './shaders/vertex.glsl';
-import fragmentShader from './shaders/fragmentShader.glsl';
+import fragmentShader from './shaders/fragment.glsl';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
+
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -10,34 +12,39 @@ const camera = new THREE.PerspectiveCamera(
   1000,
 );
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setClearColor(0x000000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setClearColor(0xe3c6b4);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.25;
+controls.screenSpacePanning = false;
+controls.minDistance = 2;
+controls.maxDistance = 6;
+
+const sphereGeometry = new THREE.IcosahedronGeometry(1, 128);
 
 const material = new THREE.ShaderMaterial({
   vertexShader: vertexShader,
   fragmentShader: fragmentShader,
 });
 
-const waterSphere = new THREE.Mesh(sphereGeometry, material);
-scene.add(waterSphere);
+material.uniforms.uTime = { value: 0.0 };
+material.uniforms.uRadius = { value: 0.5 };
+material.uniforms.uColor = { value: new THREE.Color(0xe3c6b4) };
+material.uniforms.uEffect = { value: 1 };
 
-const edges = new THREE.EdgesGeometry(sphereGeometry);
-const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
-const line = new THREE.LineSegments(edges, lineMaterial);
-scene.add(line);
+const sphere = new THREE.Mesh(sphereGeometry, material);
+scene.add(sphere);
 
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(0, 1, 1).normalize();
-scene.add(light);
-
-camera.position.z = 5;
+camera.position.z = 4;
 
 function animate() {
   requestAnimationFrame(animate);
+  controls.update();
+  material.uniforms.uTime.value += 0.001
   renderer.render(scene, camera);
 }
 
